@@ -1,0 +1,394 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Data Quality & Validation Reports{% endblock %}
+
+{% block header %}Data Quality & Validation Reports{% endblock %}
+
+{% block content %}
+<!-- Back Navigation -->
+<div class="mb-3">
+    <a href="{{ url_for('admin_reports') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Back to Reports
+    </a>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Total Records</h6>
+                        <h3 class="mb-0">{{ total_records }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-database fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Validated Records</h6>
+                        <h3 class="mb-0">{{ validated_records }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Pending Validation</h6>
+                        <h3 class="mb-0">{{ pending_validation }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-clock fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Data Quality Score</h6>
+                        <h3 class="mb-0">{{ data_quality_score }}%</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-shield-alt fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <!-- Validation Status Distribution -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>Validation Status Distribution
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="validationStatusChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Confidence vs Accuracy Correlation -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-scatter me-2"></i>Confidence vs Accuracy Correlation
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="confidenceAccuracyChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Data Quality Analysis -->
+<div class="row mb-4">
+    <!-- Feedback Analysis -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-comments me-2"></i>User Feedback Analysis
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="feedbackAnalysisChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Common Misclassifications -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Common Misclassifications
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="misclassificationChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Tables -->
+<div class="row">
+    <!-- Edge Cases Analysis -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-search me-2"></i>Edge Cases Analysis
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive" style="max-height: 400px;">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Record ID</th>
+                                <th>Predicted</th>
+                                <th>Confidence</th>
+                                <th>Correct</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for edge_case in edge_cases %}
+                            <tr>
+                                <td>#{{ edge_case.id }}</td>
+                                <td>{{ edge_case.predicted_category }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'danger' if edge_case.confidence_score < 0.5 else 'warning' if edge_case.confidence_score < 0.7 else 'success' }}">
+                                        {{ '%.1f%%' % (edge_case.confidence_score * 100) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if edge_case.is_correct == 1 %}
+                                        <span class="badge bg-success">✓</span>
+                                    {% elif edge_case.is_correct == 0 %}
+                                        <span class="badge bg-danger">✗</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">?</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small class="text-muted">{{ edge_case.notes[:30] + '...' if edge_case.notes and edge_case.notes|length > 30 else edge_case.notes or 'No notes' }}</small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Data Distribution Analysis -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>Data Distribution Analysis
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Breed Category</th>
+                                <th>Predicted</th>
+                                <th>Actual</th>
+                                <th>Balance</th>
+                                <th>Quality</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for distribution in data_distribution %}
+                            <tr>
+                                <td>{{ distribution.category }}</td>
+                                <td>{{ distribution.predicted_count }}</td>
+                                <td>{{ distribution.actual_count }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if distribution.balance >= 0.8 else 'warning' if distribution.balance >= 0.6 else 'danger' }}">
+                                        {{ '%.1f%%' % (distribution.balance * 100) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if distribution.quality >= 0.8 else 'warning' if distribution.quality >= 0.6 else 'danger' }}">
+                                        {{ '%.1f%%' % (distribution.quality * 100) }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quality Metrics -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-tachometer-alt me-2"></i>Quality Metrics Summary
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h4 class="text-primary">{{ correlation_coefficient }}</h4>
+                            <p class="text-muted mb-0">Confidence-Accuracy Correlation</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h4 class="text-success">{{ validation_rate }}%</h4>
+                            <p class="text-muted mb-0">Validation Rate</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h4 class="text-info">{{ avg_confidence_validated }}%</h4>
+                            <p class="text-muted mb-0">Avg Confidence (Validated)</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h4 class="text-warning">{{ low_confidence_count }}</h4>
+                            <p class="text-muted mb-0">Low Confidence Records</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Validation Status Chart
+const validationStatusCtx = document.getElementById('validationStatusChart').getContext('2d');
+new Chart(validationStatusCtx, {
+    type: 'doughnut',
+    data: {
+        labels: {{ validation_labels | tojson }},
+        datasets: [{
+            data: {{ validation_data | tojson }},
+            backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Confidence vs Accuracy Chart
+const confidenceAccuracyCtx = document.getElementById('confidenceAccuracyChart').getContext('2d');
+new Chart(confidenceAccuracyCtx, {
+    type: 'scatter',
+    data: {
+        datasets: [{
+            label: 'Records',
+            data: {{ scatter_data | tojson }},
+            backgroundColor: 'rgba(0, 123, 255, 0.6)',
+            borderColor: 'rgba(0, 123, 255, 1)',
+            pointRadius: 6
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            x: {
+                title: {
+                    display: true,
+                    text: 'Confidence Score'
+                },
+                min: 0,
+                max: 1
+            },
+            y: {
+                title: {
+                    display: true,
+                    text: 'Accuracy (0=Wrong, 1=Correct)'
+                },
+                min: 0,
+                max: 1
+            }
+        }
+    }
+});
+
+// Feedback Analysis Chart
+const feedbackAnalysisCtx = document.getElementById('feedbackAnalysisChart').getContext('2d');
+new Chart(feedbackAnalysisCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ feedback_labels | tojson }},
+        datasets: [{
+            label: 'Count',
+            data: {{ feedback_data | tojson }},
+            backgroundColor: ['#28a745', '#dc3545', '#6c757d'],
+            borderColor: ['#1e7e34', '#bd2130', '#545b62'],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Misclassification Chart
+const misclassificationCtx = document.getElementById('misclassificationChart').getContext('2d');
+new Chart(misclassificationCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ misclassification_labels | tojson }},
+        datasets: [{
+            label: 'Frequency',
+            data: {{ misclassification_data | tojson }},
+            backgroundColor: '#dc3545',
+            borderColor: '#bd2130',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

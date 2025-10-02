@@ -1,0 +1,81 @@
+{% extends 'admin_base.html' %}
+{% block title %}Records{% endblock %}
+{% block header %}Records{% endblock %}
+{% block content %}
+<style>
+  @media (max-width: 768px) {
+    .table th:nth-child(1), .table td:nth-child(1),
+    .table th:nth-child(5), .table td:nth-child(5),
+    .table th:nth-child(6), .table td:nth-child(6) {
+      display: none;
+    }
+  }
+  @media (max-width: 576px) {
+    .table th:nth-child(4), .table td:nth-child(4) {
+      display: none;
+    }
+  }
+</style>
+{% with messages = get_flashed_messages(category_filter=['records'], with_categories=false) %}
+  {% if messages %}
+  <div class="mb-3" id="module-messages">
+    {% for message in messages %}
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endwith %}
+<div class="table-responsive">
+  <table id="recordsTable" class="table table-striped align-middle">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Image</th>
+        <th>Predicted</th>
+        <th>Confidence</th>
+        <th>Model</th>
+        <th>Uploaded</th>
+        <th style="width:110px">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in records %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td><img src="{{ url_for('uploaded_file', filename=r.filename) }}" alt="" style="height:40px"></td>
+        <td>{{ r.predicted_category }}</td>
+        <td>{{ '%.2f%%' % (r.confidence_score * 100) }}</td>
+        <td>
+          {% if r.model_source %}
+            <span class="badge bg-info">{{ r.model_source }}</span>
+          {% else %}
+            <span class="text-muted">Unknown</span>
+          {% endif %}
+        </td>
+        <td>{{ r.uploaded_at }}</td>
+        <td>
+          <a class="btn btn-sm btn-outline-primary w-100" href="{{ url_for('admin_record_view', record_id=r.id) }}">View</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    const el = document.getElementById('recordsTable');
+    if (el && window.jQuery) {
+      jQuery(el).DataTable({
+        pageLength: 10,
+        lengthChange: false,
+        order: [[4,'desc']],
+        language: { search: 'Search:' }
+      });
+    }
+  });
+</script>
+{% endblock %}
+

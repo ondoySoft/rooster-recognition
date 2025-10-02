@@ -1,0 +1,380 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Usage & Activity Reports{% endblock %}
+
+{% block header %}Usage & Activity Reports{% endblock %}
+
+{% block content %}
+<!-- Back Navigation -->
+<div class="mb-3">
+    <a href="{{ url_for('admin_reports') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Back to Reports
+    </a>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Total Uploads</h6>
+                        <h3 class="mb-0">{{ total_uploads }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-upload fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Active Users</h6>
+                        <h3 class="mb-0">{{ active_users }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-users fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Model Switches</h6>
+                        <h3 class="mb-0">{{ model_switches }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-exchange-alt fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Avg Session Time</h6>
+                        <h3 class="mb-0">{{ avg_session_time }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-clock fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <!-- Upload Trends -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Upload Trends (Last 7 Days)
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="uploadTrendsChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Model Usage Distribution -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>Model Usage Distribution
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="modelUsageChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Activity Analysis -->
+<div class="row mb-4">
+    <!-- Hourly Activity -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>Hourly Activity Pattern
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="hourlyActivityChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- User Activity Timeline -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-area me-2"></i>User Activity Timeline
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="userActivityChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Tables -->
+<div class="row">
+    <!-- Recent Activity -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>Recent Activity
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive" style="max-height: 400px;">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>User</th>
+                                <th>Action</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for activity in recent_activities %}
+                            <tr>
+                                <td>
+                                    <small class="text-muted">{{ activity.created_at.strftime('%H:%M') }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ activity.username or 'System' }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if activity.action == 'LOGIN' else 'info' if activity.action == 'ACTIVATE' else 'warning' if activity.action == 'UPDATE' else 'danger' if activity.action == 'LOGOUT' else 'secondary' }}">
+                                        {{ activity.action }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <small class="text-muted">{{ activity.entity_type }}</small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Model Usage Statistics -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-table me-2"></i>Model Usage Statistics
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Model Source</th>
+                                <th>Predictions</th>
+                                <th>Last Used</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for model in model_usage_stats %}
+                            <tr>
+                                <td>
+                                    <span class="badge bg-{{ 'primary' if model.model_source == 'Local Training' else 'success' if model.model_source == 'Google Colab' else 'info' }}">
+                                        {{ model.model_source }}
+                                    </span>
+                                </td>
+                                <td>{{ model.prediction_count }}</td>
+                                <td>
+                                    <small class="text-muted">
+                                        {{ model.last_used.strftime('%m/%d %H:%M') if model.last_used else 'Never' }}
+                                    </small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if model.is_active else 'secondary' }}">
+                                        {{ 'Active' if model.is_active else 'Inactive' }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Load Analysis -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-server me-2"></i>System Load Analysis
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h4 class="text-primary">{{ peak_hour }}</h4>
+                            <p class="text-muted mb-0">Peak Activity Hour</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h4 class="text-success">{{ busiest_day }}</h4>
+                            <p class="text-muted mb-0">Busiest Day</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h4 class="text-info">{{ avg_daily_uploads }}</h4>
+                            <p class="text-muted mb-0">Avg Daily Uploads</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h4 class="text-warning">{{ total_sessions }}</h4>
+                            <p class="text-muted mb-0">Total Sessions</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Upload Trends Chart
+const uploadTrendsCtx = document.getElementById('uploadTrendsChart').getContext('2d');
+new Chart(uploadTrendsCtx, {
+    type: 'line',
+    data: {
+        labels: {{ trend_dates | tojson }},
+        datasets: [{
+            label: 'Daily Uploads',
+            data: {{ daily_uploads | tojson }},
+            borderColor: '#007bff',
+            backgroundColor: 'rgba(0, 123, 255, 0.1)',
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Model Usage Chart
+const modelUsageCtx = document.getElementById('modelUsageChart').getContext('2d');
+new Chart(modelUsageCtx, {
+    type: 'doughnut',
+    data: {
+        labels: {{ model_usage_labels | tojson }},
+        datasets: [{
+            data: {{ model_usage_data | tojson }},
+            backgroundColor: ['#007bff', '#28a745', '#17a2b8'],
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Hourly Activity Chart
+const hourlyActivityCtx = document.getElementById('hourlyActivityChart').getContext('2d');
+new Chart(hourlyActivityCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ hourly_labels | tojson }},
+        datasets: [{
+            label: 'Activity Count',
+            data: {{ hourly_data | tojson }},
+            backgroundColor: '#17a2b8',
+            borderColor: '#117a8b',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// User Activity Chart
+const userActivityCtx = document.getElementById('userActivityChart').getContext('2d');
+new Chart(userActivityCtx, {
+    type: 'line',
+    data: {
+        labels: {{ activity_dates | tojson }},
+        datasets: [{
+            label: 'Login Events',
+            data: {{ login_events | tojson }},
+            borderColor: '#28a745',
+            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,4 @@
+0 bantam
+1 dual_purpose
+2 gamefowl
+3 other

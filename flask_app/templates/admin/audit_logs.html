@@ -1,0 +1,130 @@
+{% extends "admin_base.html" %}
+
+{% block header %}Audit Logs{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm">
+  <div class="card-header">
+    <h5 class="card-title mb-0">
+      <i class="fas fa-clipboard-list me-2"></i>System Audit Logs
+    </h5>
+    <small class="text-muted">Track all admin actions and system changes</small>
+  </div>
+  <div class="card-body">
+    {% if audit_logs.items %}
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead class="table-dark">
+            <tr>
+              <th>Date & Time</th>
+              <th>User</th>
+              <th>Action</th>
+              <th>Entity</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in audit_logs.items %}
+            <tr>
+              <td>
+                <small class="text-muted">
+                  {{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                </small>
+              </td>
+              <td>
+                {% if log.user %}
+                  <span class="badge bg-primary">{{ log.user.username }}</span>
+                {% else %}
+                  <span class="text-muted">System</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if log.action == 'LOGIN' %}
+                  <span class="badge bg-success">LOGIN</span>
+                {% elif log.action == 'LOGOUT' %}
+                  <span class="badge bg-secondary">LOGOUT</span>
+                {% elif log.action == 'CREATE' %}
+                  <span class="badge bg-info">CREATE</span>
+                {% elif log.action == 'UPDATE' %}
+                  <span class="badge bg-warning">UPDATE</span>
+                {% elif log.action == 'DELETE' %}
+                  <span class="badge bg-danger">DELETE</span>
+                {% else %}
+                  <span class="badge bg-light text-dark">{{ log.action }}</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="text-capitalize">{{ log.entity_type }}</span>
+                {% if log.entity_id %}
+                  <small class="text-muted">#{{ log.entity_id }}</small>
+                {% endif %}
+              </td>
+              <td>
+                {% if log.payload %}
+                  <button class="btn btn-sm btn-outline-info" type="button" 
+                          data-bs-toggle="collapse" data-bs-target="#details-{{ log.id }}" 
+                          aria-expanded="false">
+                    <i class="fas fa-eye"></i> View Details
+                  </button>
+                  <div class="collapse mt-2" id="details-{{ log.id }}">
+                    <div class="card card-body bg-light">
+                      <pre class="mb-0 small">{{ log.payload | tojson(indent=2) }}</pre>
+                    </div>
+                  </div>
+                {% else %}
+                  <span class="text-muted">No details</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      {% if audit_logs.pages > 1 %}
+      <nav aria-label="Audit logs pagination">
+        <ul class="pagination justify-content-center">
+          {% if audit_logs.has_prev %}
+            <li class="page-item">
+              <a class="page-link" href="{{ url_for('admin_audit_logs', page=audit_logs.prev_num) }}">Previous</a>
+            </li>
+          {% endif %}
+          
+          {% for page_num in audit_logs.iter_pages() %}
+            {% if page_num %}
+              {% if page_num != audit_logs.page %}
+                <li class="page-item">
+                  <a class="page-link" href="{{ url_for('admin_audit_logs', page=page_num) }}">{{ page_num }}</a>
+                </li>
+              {% else %}
+                <li class="page-item active">
+                  <span class="page-link">{{ page_num }}</span>
+                </li>
+              {% endif %}
+            {% else %}
+              <li class="page-item disabled">
+                <span class="page-link">...</span>
+              </li>
+            {% endif %}
+          {% endfor %}
+          
+          {% if audit_logs.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="{{ url_for('admin_audit_logs', page=audit_logs.next_num) }}">Next</a>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
+      {% endif %}
+
+    {% else %}
+      <div class="text-center py-5">
+        <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+        <h5 class="text-muted">No audit logs found</h5>
+        <p class="text-muted">Audit logs will appear here as admin actions are performed.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

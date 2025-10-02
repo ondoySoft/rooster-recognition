@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Image - Rooster Recognition System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">
+                    <i class="fas fa-upload"></i> Upload Rooster Image
+                </h3>
+            </div>
+            
+            <!-- Active Model Indicator -->
+            <div class="card-body bg-light border-bottom">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h6 class="mb-1">
+                            <i class="fas fa-brain text-primary"></i> Active AI Model
+                        </h6>
+                        <p class="mb-0 text-muted" id="active-model-info">
+                            <i class="fas fa-spinner fa-spin"></i> Loading model information...
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <span class="badge bg-success" id="model-status-badge">
+                            <i class="fas fa-check-circle"></i> Ready
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                    <div class="mb-4">
+                        <label for="file" class="form-label">Select Rooster Image</label>
+                        <input type="file" class="form-control" id="file" name="file" accept="image/*" required>
+                        <div class="form-text">
+                            Supported formats: JPG, PNG, GIF, BMP. Maximum file size: 16MB
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Tips for best results:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Use clear, well-lit images</li>
+                                <li>Ensure the rooster is clearly visible</li>
+                                <li>Avoid blurry or dark images</li>
+                                <li>Include the rooster's full body if possible</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                            <i class="fas fa-upload"></i> Upload and Analyze
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Image Preview -->
+        <div class="card mt-4" id="previewCard" style="display: none;">
+            <div class="card-header">
+                <h5 class="mb-0">Image Preview</h5>
+            </div>
+            <div class="card-body text-center">
+                <img id="previewImg" src="" alt="Preview" class="img-fluid rounded" style="max-height: 400px;">
+            </div>
+        </div>
+        
+        <!-- Loading Spinner -->
+        <div class="text-center mt-4" id="loadingSpinner" style="display: none;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Processing...</span>
+            </div>
+            <p class="mt-2">Processing image and analyzing breed...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Uploads -->
+<div class="row mt-5">
+    <div class="col-lg-8 mx-auto">
+        <h4>Recent Uploads</h4>
+        <div class="row" id="recentUploads">
+            <!-- Recent uploads will be loaded here via JavaScript -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('file');
+    const previewCard = document.getElementById('previewCard');
+    const previewImg = document.getElementById('previewImg');
+    const uploadForm = document.getElementById('uploadForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    
+    // File input change handler
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+                previewCard.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        } else {
+            previewCard.style.display = 'none';
+        }
+    });
+    
+    // Form submission handler
+    uploadForm.addEventListener('submit', function(e) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        loadingSpinner.style.display = 'block';
+    });
+    
+    // Load recent uploads
+    loadRecentUploads();
+    
+    // Load active model information
+    loadActiveModelInfo();
+});
+
+function loadRecentUploads() {
+    // This would typically fetch from an API endpoint
+    // For now, we'll show a placeholder
+    const recentUploadsDiv = document.getElementById('recentUploads');
+    recentUploadsDiv.innerHTML = `
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                Recent uploads will be displayed here. Upload an image to see it appear!
+            </div>
+        </div>
+    `;
+}
+
+function loadActiveModelInfo() {
+    fetch('/api/active-model')
+    .then(response => response.json())
+    .then(data => {
+        const modelInfoElement = document.getElementById('active-model-info');
+        const statusBadgeElement = document.getElementById('model-status-badge');
+        
+        if (data.success) {
+            const model = data.model;
+            const accuracyText = model.accuracy_score ? 
+                ` (Accuracy: ${(model.accuracy_score * 100).toFixed(1)}%)` : '';
+            
+            modelInfoElement.innerHTML = `
+                <strong>${model.model_source}</strong>${accuracyText}<br>
+                <small>Model ID: ${model.model_id}</small>
+            `;
+            
+            statusBadgeElement.innerHTML = '<i class="fas fa-check-circle"></i> Ready';
+            statusBadgeElement.className = 'badge bg-success';
+        } else {
+            modelInfoElement.innerHTML = `
+                <span class="text-warning">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    ${data.message || 'Unable to load model information'}
+                </span>
+            `;
+            statusBadgeElement.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error';
+            statusBadgeElement.className = 'badge bg-warning';
+        }
+    })
+    .catch(error => {
+        console.error('Error loading active model info:', error);
+        const modelInfoElement = document.getElementById('active-model-info');
+        const statusBadgeElement = document.getElementById('model-status-badge');
+        
+        modelInfoElement.innerHTML = `
+            <span class="text-danger">
+                <i class="fas fa-times-circle"></i> 
+                Error loading model information
+            </span>
+        `;
+        statusBadgeElement.innerHTML = '<i class="fas fa-times-circle"></i> Error';
+        statusBadgeElement.className = 'badge bg-danger';
+    });
+}
+</script>
+{% endblock %}

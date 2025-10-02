@@ -1,0 +1,661 @@
+{% extends "admin_base.html" %}
+
+{% block header %}Train Model{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-brain me-2"></i>Local Model Training
+        </h5>
+      </div>
+      <div class="card-body">
+        
+        <!-- Training Status -->
+        <div id="training-status" class="alert alert-info" style="display: none;">
+          <div class="d-flex align-items-center">
+            <div class="spinner-border spinner-border-sm me-3" role="status">
+              <span class="visually-hidden">Training...</span>
+            </div>
+            <div>
+              <strong>Training in Progress...</strong>
+              <div id="training-details" class="small text-muted">
+                Preparing dataset...
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Training Complete -->
+        <div id="training-complete" class="alert alert-success" style="display: none;">
+          <h6><i class="fas fa-check-circle me-2"></i>Training Completed!</h6>
+          <div id="training-results">
+            <p><strong>Final Accuracy:</strong> <span id="final-accuracy">-</span></p>
+            <p><strong>Training Time:</strong> <span id="training-time">-</span></p>
+            <p><strong>Dataset Size:</strong> <span id="dataset-size">-</span> images</p>
+          </div>
+          <div class="mt-3">
+            <button id="accept-model" class="btn btn-success me-2">
+              <i class="fas fa-check me-2"></i>Accept This Model
+            </button>
+            <button id="reject-model" class="btn btn-danger me-2">
+              <i class="fas fa-times me-2"></i>Reject Model
+            </button>
+            <button id="train-again" class="btn btn-outline-primary">
+              <i class="fas fa-redo me-2"></i>Train Another Model
+            </button>
+          </div>
+        </div>
+
+        <!-- Model Pending Approval -->
+        <div id="model-pending" class="alert alert-warning" style="display: none;">
+          <h6><i class="fas fa-clock me-2"></i>Model Ready for Review</h6>
+          <div id="pending-results">
+            <p><strong>Final Accuracy:</strong> <span id="pending-accuracy">-</span></p>
+            <p><strong>Training Time:</strong> <span id="pending-time">-</span></p>
+            <p><strong>Dataset Size:</strong> <span id="pending-dataset-size">-</span> images</p>
+            <p class="text-muted"><small><i class="fas fa-info-circle me-1"></i>Model is saved temporarily. Please review and decide whether to accept or reject it.</small></p>
+          </div>
+          <div class="mt-3">
+            <button id="accept-pending-model" class="btn btn-success me-2">
+              <i class="fas fa-check me-2"></i>Accept This Model
+            </button>
+            <button id="reject-pending-model" class="btn btn-danger me-2">
+              <i class="fas fa-times me-2"></i>Reject Model
+            </button>
+            <button id="train-new-model" class="btn btn-outline-primary">
+              <i class="fas fa-redo me-2"></i>Train Another Model
+            </button>
+          </div>
+        </div>
+
+        <!-- Training Error -->
+        <div id="training-error" class="alert alert-danger" style="display: none;">
+          <h6><i class="fas fa-exclamation-triangle me-2"></i>Training Failed</h6>
+          <p id="error-message">An error occurred during training.</p>
+          <button id="retry-training" class="btn btn-outline-danger">
+            <i class="fas fa-redo me-2"></i>Retry Training
+          </button>
+        </div>
+
+        <!-- Training Controls -->
+        <div id="training-controls">
+          <div class="mb-4">
+            <h6 class="text-primary mb-3">
+              <i class="fas fa-info-circle me-2"></i>Training Information
+            </h6>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="card bg-light">
+                  <div class="card-body py-2">
+                    <small class="text-muted">Dataset Location</small>
+                    <div class="fw-semibold">dataset/</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="card bg-light">
+                  <div class="card-body py-2">
+                    <small class="text-muted">Model Architecture</small>
+                    <div class="fw-semibold">MobileNetV2</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row mt-2">
+              <div class="col-md-6">
+                <div class="card bg-light">
+                  <div class="card-body py-2">
+                    <small class="text-muted">Training Epochs</small>
+                    <div class="fw-semibold">25</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="card bg-light">
+                  <div class="card-body py-2">
+                    <small class="text-muted">Batch Size</small>
+                    <div class="fw-semibold">32</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row mt-2">
+              <div class="col-md-12">
+                <div class="card bg-warning bg-opacity-10 border-warning">
+                  <div class="card-body py-2">
+                    <small class="text-muted">Current Model Accuracy</small>
+                    <div class="fw-semibold text-warning" id="current-model-accuracy">
+                      <i class="fas fa-spinner fa-spin me-1"></i>Loading...
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-grid">
+            <button id="start-training" class="btn btn-primary btn-lg">
+              <i class="fas fa-play me-2"></i>Start Training
+            </button>
+          </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div id="progress-section" style="display: none;" class="mt-4">
+          <div class="mb-2">
+            <div class="d-flex justify-content-between">
+              <span>Training Progress</span>
+              <span id="progress-text">0%</span>
+            </div>
+          </div>
+          <div class="progress mb-3" style="height: 20px;">
+            <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                 role="progressbar" style="width: 0%"></div>
+          </div>
+          
+          <div class="row text-center">
+            <div class="col-3">
+              <div class="card bg-light">
+                <div class="card-body py-2">
+                  <div class="h6 mb-0" id="current-epoch">0</div>
+                  <small class="text-muted">Current Epoch</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-3">
+              <div class="card bg-light">
+                <div class="card-body py-2">
+                  <div class="h6 mb-0" id="total-epochs">25</div>
+                  <small class="text-muted">Total Epochs</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-3">
+              <div class="card bg-light">
+                <div class="card-body py-2">
+                  <div class="h6 mb-0" id="current-accuracy">0.00</div>
+                  <small class="text-muted">Current Accuracy</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-3">
+              <div class="card bg-light">
+                <div class="card-body py-2">
+                  <div class="h6 mb-0" id="training-time-display">00:00</div>
+                  <small class="text-muted">Elapsed Time</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card shadow-sm">
+      <div class="card-header">
+        <h6 class="card-title mb-0">
+          <i class="fas fa-chart-line me-2"></i>Training Tips
+        </h6>
+      </div>
+      <div class="card-body">
+        <ul class="list-unstyled mb-0">
+          <li class="mb-2">
+            <i class="fas fa-check text-success me-2"></i>
+            <small>Ensure dataset folder contains images in 4 categories</small>
+          </li>
+          <li class="mb-2">
+            <i class="fas fa-check text-success me-2"></i>
+            <small>Training typically takes 15-30 minutes</small>
+          </li>
+          <li class="mb-2">
+            <i class="fas fa-check text-success me-2"></i>
+            <small>You can continue using other admin features</small>
+          </li>
+          <li class="mb-2">
+            <i class="fas fa-check text-success me-2"></i>
+            <small>New model will replace current local model</small>
+          </li>
+          <li class="mb-0">
+            <i class="fas fa-check text-success me-2"></i>
+            <small>Training progress is saved automatically</small>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mt-3">
+      <div class="card-header">
+        <h6 class="card-title mb-0">
+          <i class="fas fa-history me-2"></i>Training History
+        </h6>
+      </div>
+      <div class="card-body">
+        <div id="training-history-content">
+          <div class="text-center text-muted">
+            <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+            <p class="mb-0">Loading training history...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let trainingStartTime = null;
+let progressInterval = null;
+
+document.getElementById('start-training').addEventListener('click', function() {
+    startTraining();
+});
+
+document.getElementById('accept-model').addEventListener('click', function() {
+    acceptModel();
+});
+
+document.getElementById('reject-model').addEventListener('click', function() {
+    rejectModel();
+});
+
+document.getElementById('accept-pending-model').addEventListener('click', function() {
+    acceptPendingModel();
+});
+
+document.getElementById('reject-pending-model').addEventListener('click', function() {
+    rejectPendingModel();
+});
+
+document.getElementById('train-again').addEventListener('click', function() {
+    resetTrainingInterface();
+});
+
+document.getElementById('train-new-model').addEventListener('click', function() {
+    resetTrainingInterface();
+});
+
+document.getElementById('retry-training').addEventListener('click', function() {
+    resetTrainingInterface();
+});
+
+// Check for existing training when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    checkExistingTraining();
+    loadCurrentModelAccuracy();
+    loadTrainingHistory();
+});
+
+function checkExistingTraining() {
+    fetch('/admin/train-model/progress')
+    .then(response => response.json())
+    .then(data => {
+        console.log('Checking existing training:', data);
+        if (data.status === 'training') {
+            // Training is already running, show progress
+            document.getElementById('training-controls').style.display = 'none';
+            document.getElementById('progress-section').style.display = 'block';
+            document.getElementById('training-status').style.display = 'block';
+            
+            // Start progress monitoring
+            progressInterval = setInterval(updateProgress, 2000);
+            
+            // Update display immediately
+            updateProgressDisplay(data);
+        } else if (data.status === 'pending_approval') {
+            // Training completed, show pending approval
+            showModelPending(data);
+        } else if (data.status === 'completed') {
+            // Training completed and accepted
+            showTrainingComplete(data);
+        } else if (data.status === 'rejected') {
+            // Training completed but rejected
+            showTrainingRejected(data);
+        } else if (data.status === 'idle') {
+            // No training active, show controls
+            document.getElementById('training-controls').style.display = 'block';
+            document.getElementById('progress-section').style.display = 'none';
+            document.getElementById('training-status').style.display = 'none';
+        }
+    })
+    .catch(error => {
+        console.error('Error checking existing training:', error);
+    });
+}
+
+function startTraining() {
+    // Hide controls and show progress
+    document.getElementById('training-controls').style.display = 'none';
+    document.getElementById('progress-section').style.display = 'block';
+    document.getElementById('training-status').style.display = 'block';
+    
+    trainingStartTime = new Date();
+    
+    // Start progress monitoring
+    progressInterval = setInterval(updateProgress, 2000);
+    
+    // Start training
+    fetch('/admin/train-model/start', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Training started successfully
+            console.log('Training started');
+        } else {
+            showError(data.message || 'Failed to start training');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showError('Failed to start training');
+    });
+}
+
+function updateProgress() {
+    fetch('/admin/train-model/progress')
+    .then(response => response.json())
+    .then(data => {
+        console.log('Progress data received:', data);
+        if (data.status === 'training') {
+            updateProgressDisplay(data);
+        } else if (data.status === 'completed') {
+            showTrainingComplete(data);
+        } else if (data.status === 'pending_approval') {
+            showModelPending(data);
+        } else if (data.status === 'rejected') {
+            showTrainingRejected(data);
+        } else if (data.status === 'error') {
+            showError(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error updating progress:', error);
+    });
+}
+
+function updateProgressDisplay(data) {
+    console.log('Updating progress display with:', data);
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    const currentEpoch = document.getElementById('current-epoch');
+    const currentAccuracy = document.getElementById('current-accuracy');
+    const trainingTimeDisplay = document.getElementById('training-time-display');
+    
+    if (progressBar) {
+        progressBar.style.width = data.progress + '%';
+        console.log('Progress bar width set to:', data.progress + '%');
+    }
+    if (progressText) {
+        progressText.textContent = data.progress + '%';
+    }
+    if (currentEpoch) {
+        currentEpoch.textContent = data.epoch;
+    }
+    if (currentAccuracy) {
+        currentAccuracy.textContent = data.accuracy.toFixed(3);
+    }
+    
+    if (trainingStartTime && trainingTimeDisplay) {
+        const elapsed = new Date() - trainingStartTime;
+        const minutes = Math.floor(elapsed / 60000);
+        const seconds = Math.floor((elapsed % 60000) / 1000);
+        trainingTimeDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+}
+
+function showTrainingComplete(data) {
+    clearInterval(progressInterval);
+    
+    document.getElementById('training-status').style.display = 'none';
+    document.getElementById('progress-section').style.display = 'none';
+    document.getElementById('training-complete').style.display = 'block';
+    
+    document.getElementById('final-accuracy').textContent = (data.accuracy * 100).toFixed(2) + '%';
+    document.getElementById('dataset-size').textContent = data.dataset_size;
+    
+    if (trainingStartTime) {
+        const elapsed = new Date() - trainingStartTime;
+        const minutes = Math.floor(elapsed / 60000);
+        const seconds = Math.floor((elapsed % 60000) / 1000);
+        document.getElementById('training-time').textContent = `${minutes}m ${seconds}s`;
+    }
+}
+
+function showModelPending(data) {
+    clearInterval(progressInterval);
+    
+    document.getElementById('training-status').style.display = 'none';
+    document.getElementById('progress-section').style.display = 'none';
+    document.getElementById('model-pending').style.display = 'block';
+    
+    document.getElementById('pending-accuracy').textContent = (data.accuracy * 100).toFixed(2) + '%';
+    document.getElementById('pending-dataset-size').textContent = data.dataset_size;
+    
+    if (trainingStartTime) {
+        const elapsed = new Date() - trainingStartTime;
+        const minutes = Math.floor(elapsed / 60000);
+        const seconds = Math.floor((elapsed % 60000) / 1000);
+        document.getElementById('pending-time').textContent = `${minutes}m ${seconds}s`;
+    }
+}
+
+function showTrainingRejected(data) {
+    clearInterval(progressInterval);
+    
+    document.getElementById('training-status').style.display = 'none';
+    document.getElementById('progress-section').style.display = 'none';
+    document.getElementById('training-complete').style.display = 'none';
+    document.getElementById('model-pending').style.display = 'none';
+    document.getElementById('training-controls').style.display = 'block';
+    
+    // Show a message that training was rejected
+    alert('Previous training was rejected. You can start a new training session.');
+}
+
+function showError(message) {
+    clearInterval(progressInterval);
+    
+    document.getElementById('training-status').style.display = 'none';
+    document.getElementById('progress-section').style.display = 'none';
+    document.getElementById('training-error').style.display = 'block';
+    document.getElementById('error-message').textContent = message;
+}
+
+function acceptModel() {
+    // Redirect to models page to activate the new model
+    window.location.href = '/admin/models';
+}
+
+function rejectModel() {
+    if (confirm('Are you sure you want to reject this model? This action cannot be undone.')) {
+        fetch('/admin/train-model/reject', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Model rejected successfully!');
+                resetTrainingInterface();
+            } else {
+                alert('Error rejecting model: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to reject model');
+        });
+    }
+}
+
+function acceptPendingModel() {
+    fetch('/admin/train-model/accept', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Model accepted and activated successfully!');
+            resetTrainingInterface();
+        } else {
+            alert('Error accepting model: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to accept model');
+    });
+}
+
+function rejectPendingModel() {
+    if (confirm('Are you sure you want to reject this model? This action cannot be undone.')) {
+        fetch('/admin/train-model/reject', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Model rejected successfully!');
+                resetTrainingInterface();
+            } else {
+                alert('Error rejecting model: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to reject model');
+        });
+    }
+}
+
+function loadCurrentModelAccuracy() {
+    fetch('/admin/train-model/current-accuracy')
+    .then(response => response.json())
+    .then(data => {
+        const accuracyElement = document.getElementById('current-model-accuracy');
+        if (accuracyElement) {
+            if (data.success) {
+                accuracyElement.innerHTML = `<i class="fas fa-chart-line me-1"></i>${data.accuracy_percentage}`;
+                accuracyElement.className = 'fw-semibold text-success';
+                accuracyElement.title = `Model: ${data.model_source} (${data.model_id})`;
+            } else {
+                accuracyElement.innerHTML = '<i class="fas fa-question-circle me-1"></i>Not Available';
+                accuracyElement.className = 'fw-semibold text-muted';
+                accuracyElement.title = data.message || 'No accuracy score available';
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error loading current model accuracy:', error);
+        const accuracyElement = document.getElementById('current-model-accuracy');
+        if (accuracyElement) {
+            accuracyElement.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>Error Loading';
+            accuracyElement.className = 'fw-semibold text-danger';
+        }
+    });
+}
+
+function loadTrainingHistory() {
+    fetch('/admin/train-model/history')
+    .then(response => response.json())
+    .then(data => {
+        const historyContent = document.getElementById('training-history-content');
+        if (historyContent) {
+            if (data.success && data.history.length > 0) {
+                let historyHtml = '<div class="table-responsive">';
+                historyHtml += '<table class="table table-sm table-hover">';
+                historyHtml += '<thead class="table-light">';
+                historyHtml += '<tr><th>Type</th><th>Status</th><th>Accuracy</th><th>Date</th></tr>';
+                historyHtml += '</thead><tbody>';
+                
+                data.history.forEach(record => {
+                    const statusClass = getStatusClass(record.status);
+                    const accuracyText = record.accuracy_percentage || 'N/A';
+                    const dateText = new Date(record.created_at).toLocaleDateString();
+                    
+                    historyHtml += `<tr>`;
+                    historyHtml += `<td><span class="badge bg-secondary">${record.training_type}</span></td>`;
+                    historyHtml += `<td><span class="badge ${statusClass}">${record.status}</span></td>`;
+                    historyHtml += `<td><small>${accuracyText}</small></td>`;
+                    historyHtml += `<td><small>${dateText}</small></td>`;
+                    historyHtml += `</tr>`;
+                });
+                
+                historyHtml += '</tbody></table></div>';
+                historyContent.innerHTML = historyHtml;
+            } else {
+                historyContent.innerHTML = `
+                    <div class="text-center text-muted">
+                        <i class="fas fa-clock fa-2x mb-2"></i>
+                        <p class="mb-0">No training history found</p>
+                    </div>
+                `;
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error loading training history:', error);
+        const historyContent = document.getElementById('training-history-content');
+        if (historyContent) {
+            historyContent.innerHTML = `
+                <div class="text-center text-danger">
+                    <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                    <p class="mb-0">Error loading training history</p>
+                </div>
+            `;
+        }
+    });
+}
+
+function getStatusClass(status) {
+    switch(status) {
+        case 'accepted': return 'bg-success';
+        case 'rejected': return 'bg-danger';
+        case 'completed': return 'bg-warning';
+        case 'training': return 'bg-info';
+        case 'failed': return 'bg-danger';
+        default: return 'bg-secondary';
+    }
+}
+
+function resetTrainingInterface() {
+    document.getElementById('training-complete').style.display = 'none';
+    document.getElementById('model-pending').style.display = 'none';
+    document.getElementById('training-error').style.display = 'none';
+    document.getElementById('training-controls').style.display = 'block';
+    document.getElementById('progress-section').style.display = 'none';
+    document.getElementById('training-status').style.display = 'none';
+    
+    // Reset progress
+    document.getElementById('progress-bar').style.width = '0%';
+    document.getElementById('progress-text').textContent = '0%';
+    document.getElementById('current-epoch').textContent = '0';
+    document.getElementById('current-accuracy').textContent = '0.00';
+    document.getElementById('training-time-display').textContent = '00:00';
+    
+    trainingStartTime = null;
+    
+    // Reload current model accuracy after reset
+    loadCurrentModelAccuracy();
+    
+    // Reload training history after reset
+    loadTrainingHistory();
+}
+</script>
+{% endblock %}

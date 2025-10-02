@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Rooster Recognition System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto text-center">
+        <h1 class="display-4 mb-4">
+            <i class="fas fa-cock text-primary"></i>
+            Rooster Recognition System
+        </h1>
+        <p class="lead mb-4">
+            Upload an image of a rooster and let our AI classify it into one of four main categories with confidence scores.
+        </p>
+        
+        <div class="row mb-5">
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-upload fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title">Upload Image</h5>
+                        <p class="card-text">Upload a clear image of a rooster for category classification.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-brain fa-3x text-success mb-3"></i>
+                        <h5 class="card-title">AI Analysis</h5>
+                        <p class="card-text">Our TensorFlow model analyzes the image and predicts the category.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-chart-bar fa-3x text-info mb-3"></i>
+                        <h5 class="card-title">View Results</h5>
+                        <p class="card-text">Get detailed predictions with confidence scores and category information.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+            <a href="{{ url_for('upload_file') }}" class="btn btn-primary btn-lg me-md-2">
+                <i class="fas fa-upload"></i> Upload Rooster Image
+            </a>
+            <a href="{{ url_for('records') }}" class="btn btn-outline-secondary btn-lg">
+                <i class="fas fa-list"></i> View All Records
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-lg-10 mx-auto">
+        <h3 class="text-center mb-4">How It Works</h3>
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="d-flex">
+                    <div class="flex-shrink-0">
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                            <span class="fw-bold">1</span>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h5>Image Upload</h5>
+                        <p>Upload a clear, well-lit image of a rooster. Supported formats: JPG, PNG, GIF, BMP (max 16MB).</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="d-flex">
+                    <div class="flex-shrink-0">
+                        <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                            <span class="fw-bold">2</span>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h5>AI Processing</h5>
+                        <p>Our TensorFlow model preprocesses the image and analyzes features to identify the breed.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="d-flex">
+                    <div class="flex-shrink-0">
+                        <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                            <span class="fw-bold">3</span>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h5>Breed Prediction</h5>
+                        <p>Get the predicted breed name along with a confidence score indicating prediction accuracy.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="d-flex">
+                    <div class="flex-shrink-0">
+                        <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                            <span class="fw-bold">4</span>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h5>Database Storage</h5>
+                        <p>All predictions are saved to the database for future reference and analysis.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-lg-8 mx-auto">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <h4 class="card-title">Supported Categories</h4>
+                <p class="card-text">Our AI model can classify roosters into the following categories:</p>
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success"></i> Bantam Breeds</li>
+                            <li><i class="fas fa-check text-success"></i> Dual Purpose</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success"></i> Gamefowl Breeds</li>
+                            <li><i class="fas fa-check text-success"></i> Other Breeds</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

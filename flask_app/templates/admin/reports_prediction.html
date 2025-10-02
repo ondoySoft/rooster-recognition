@@ -1,0 +1,380 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Prediction Performance Analytics{% endblock %}
+
+{% block header %}Prediction Performance Analytics{% endblock %}
+
+{% block content %}
+<!-- Back Navigation -->
+<div class="mb-3">
+    <a href="{{ url_for('admin_reports') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Back to Reports
+    </a>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Total Predictions</h6>
+                        <h3 class="mb-0">{{ total_predictions }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-images fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Correct Predictions</h6>
+                        <h3 class="mb-0">{{ correct_predictions }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Overall Accuracy</h6>
+                        <h3 class="mb-0">{{ overall_accuracy }}%</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-chart-line fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Avg Confidence</h6>
+                        <h3 class="mb-0">{{ avg_confidence }}%</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-percentage fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <!-- Model Performance Comparison -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>Model Performance Comparison
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="modelPerformanceChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Breed-wise Accuracy -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>Breed-wise Accuracy
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="breedAccuracyChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Analysis -->
+<div class="row">
+    <!-- Confidence Score Distribution -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-area me-2"></i>Confidence Score Distribution
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="confidenceDistributionChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Performance Trends -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Performance Trends
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="performanceTrendsChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Tables -->
+<div class="row mt-4">
+    <!-- Model Performance Table -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-table me-2"></i>Model Performance Details
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Model Source</th>
+                                <th>Predictions</th>
+                                <th>Correct</th>
+                                <th>Accuracy</th>
+                                <th>Avg Confidence</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for model in model_performance %}
+                            <tr>
+                                <td>
+                                    <span class="badge bg-{{ 'primary' if model.model_source == 'Local Training' else 'success' if model.model_source == 'Google Colab' else 'info' }}">
+                                        {{ model.model_source }}
+                                    </span>
+                                </td>
+                                <td>{{ model.total_predictions }}</td>
+                                <td>{{ model.correct_predictions }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if model.accuracy >= 80 else 'warning' if model.accuracy >= 60 else 'danger' }}">
+                                        {{ model.accuracy }}%
+                                    </span>
+                                </td>
+                                <td>{{ model.avg_confidence }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Breed Performance Table -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-table me-2"></i>Breed Performance Details
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Breed Category</th>
+                                <th>Predictions</th>
+                                <th>Correct</th>
+                                <th>Accuracy</th>
+                                <th>Avg Confidence</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for breed in breed_performance %}
+                            <tr>
+                                <td>{{ breed.predicted_category }}</td>
+                                <td>{{ breed.total_predictions }}</td>
+                                <td>{{ breed.correct_predictions }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if breed.accuracy >= 80 else 'warning' if breed.accuracy >= 60 else 'danger' }}">
+                                        {{ breed.accuracy }}%
+                                    </span>
+                                </td>
+                                <td>{{ breed.avg_confidence }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Options -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-download me-2"></i>Export Options
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-primary w-100" onclick="exportChart('modelPerformanceChart', 'Model Performance')">
+                            <i class="fas fa-chart-bar me-2"></i>Model Performance
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-success w-100" onclick="exportChart('breedAccuracyChart', 'Breed Accuracy')">
+                            <i class="fas fa-chart-pie me-2"></i>Breed Accuracy
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-info w-100" onclick="exportChart('confidenceDistributionChart', 'Confidence Distribution')">
+                            <i class="fas fa-chart-area me-2"></i>Confidence Distribution
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-warning w-100" onclick="exportChart('performanceTrendsChart', 'Performance Trends')">
+                            <i class="fas fa-chart-line me-2"></i>Performance Trends
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Model Performance Chart
+const modelPerformanceCtx = document.getElementById('modelPerformanceChart').getContext('2d');
+new Chart(modelPerformanceCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ model_labels | tojson }},
+        datasets: [{
+            label: 'Accuracy %',
+            data: {{ model_accuracies | tojson }},
+            backgroundColor: ['#007bff', '#28a745', '#17a2b8'],
+            borderColor: ['#0056b3', '#1e7e34', '#117a8b'],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100
+            }
+        }
+    }
+});
+
+// Breed Accuracy Chart
+const breedAccuracyCtx = document.getElementById('breedAccuracyChart').getContext('2d');
+new Chart(breedAccuracyCtx, {
+    type: 'doughnut',
+    data: {
+        labels: {{ breed_labels | tojson }},
+        datasets: [{
+            data: {{ breed_accuracies | tojson }},
+            backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0'],
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Confidence Distribution Chart
+const confidenceDistributionCtx = document.getElementById('confidenceDistributionChart').getContext('2d');
+new Chart(confidenceDistributionCtx, {
+    type: 'line',
+    data: {
+        labels: {{ confidence_ranges | tojson }},
+        datasets: [{
+            label: 'Number of Predictions',
+            data: {{ confidence_counts | tojson }},
+            borderColor: '#17a2b8',
+            backgroundColor: 'rgba(23, 162, 184, 0.1)',
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Performance Trends Chart
+const performanceTrendsCtx = document.getElementById('performanceTrendsChart').getContext('2d');
+new Chart(performanceTrendsCtx, {
+    type: 'line',
+    data: {
+        labels: {{ trend_dates | tojson }},
+        datasets: [{
+            label: 'Daily Accuracy %',
+            data: {{ trend_accuracies | tojson }},
+            borderColor: '#28a745',
+            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100
+            }
+        }
+    }
+});
+
+function exportChart(chartId, chartName) {
+    const canvas = document.getElementById(chartId);
+    const link = document.createElement('a');
+    link.download = `${chartName}_${new Date().toISOString().split('T')[0]}.png`;
+    link.href = canvas.toDataURL();
+    link.click();
+}
+</script>
+{% endblock %}

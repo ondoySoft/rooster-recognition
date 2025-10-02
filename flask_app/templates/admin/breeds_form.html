@@ -1,0 +1,44 @@
+{% extends 'admin_base.html' %}
+{% if mode=='new' %}{% set page_title='New Breed' %}{% else %}{% set page_title='Edit Breed' %}{% endif %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block header %}{{ page_title }}{% endblock %}
+{% block content %}
+{% with messages = get_flashed_messages(category_filter=['breeds'], with_categories=false) %}
+  {% if messages %}
+  <div class="mb-3">
+    {% for message in messages %}
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endwith %}
+<form method="post" enctype="multipart/form-data" class="row g-3">
+  <div class="col-md-6">
+    <label class="form-label">Name</label>
+    <input name="name" class="form-control" value="{{ breed.name if breed else '' }}" required>
+  </div>
+  <div class="col-12">
+    <label class="form-label">Description</label>
+    <textarea name="description" class="form-control" rows="3">{{ breed.description if breed else '' }}</textarea>
+  </div>
+  <div class="col-12">
+    <label class="form-label">Characteristics</label>
+    <textarea name="characteristics" class="form-control" rows="3">{{ breed.characteristics if breed else '' }}</textarea>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Image</label>
+    <input type="file" name="image" class="form-control">
+    {% if breed and breed.image_path %}
+      <div class="mt-2"><img src="{{ url_for('static', filename=breed.image_path) }}" alt="" style="height:60px;"></div>
+    {% endif %}
+  </div>
+  <div class="col-12">
+    <button class="btn btn-primary" type="submit">Save</button>
+    <a class="btn btn-secondary" href="{{ url_for('breeds_list') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}
+

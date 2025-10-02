@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Admin{% endblock %} · Rooster Recognition</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+      /* Responsive admin layout */
+      .admin-shell { min-height:100vh; }
+      .admin-sidebar { 
+        min-width: 260px; 
+        background:#0f172a; 
+        transition: transform 0.3s ease;
+      }
+      .admin-sidebar .nav-link{ 
+        color:#cbd5e1; 
+        border-radius:.5rem; 
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.25rem;
+      }
+      .admin-sidebar .nav-link:hover, .admin-sidebar .nav-link.active{ 
+        background:#1e293b; 
+        color:#fff; 
+      }
+      
+      /* Mobile responsive */
+      @media (max-width: 768px) {
+        .admin-sidebar {
+          position: fixed;
+          top: 0;
+          left: 0;
+          height: 100vh;
+          z-index: 1050;
+          transform: translateX(-100%);
+        }
+        .admin-sidebar.show {
+          transform: translateX(0);
+        }
+        .admin-main {
+          margin-left: 0;
+        }
+        .mobile-header {
+          display: block !important;
+        }
+        .desktop-header {
+          display: none !important;
+        }
+      }
+      
+      @media (min-width: 769px) {
+        .mobile-header {
+          display: none !important;
+        }
+        .desktop-header {
+          display: block !important;
+        }
+      }
+      
+      .sidebar-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 1040;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Mobile Header -->
+    <div class="mobile-header d-none bg-primary text-white p-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <button class="btn btn-outline-light" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarCollapse" aria-controls="sidebarCollapse" aria-expanded="false">
+          <i class="fas fa-bars"></i>
+        </button>
+        <h5 class="mb-0">Admin Panel</h5>
+        <div class="text-light small">Signed in as <strong>{{ current_user.username }}</strong></div>
+      </div>
+    </div>
+
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="admin-shell d-flex">
+      <!-- Sidebar -->
+      <aside class="admin-sidebar d-flex flex-column p-3 text-white" id="adminSidebar">
+        <div class="desktop-header">
+          <h5 class="text-white mb-3">Admin Panel</h5>
+        </div>
+        <nav class="nav nav-pills flex-column gap-1">
+          <a class="nav-link {% if request.endpoint=='dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">🏠 Dashboard</a>
+          <a class="nav-link {% if request.endpoint in ['breeds_list','breeds_new','breeds_edit'] %}active{% endif %}" href="{{ url_for('breeds_list') }}">📂 Breeds</a>
+          <a class="nav-link {% if request.endpoint in ['admin_records'] %}active{% endif %}" href="{{ url_for('admin_records') }}">🖼️ Records</a>
+          <a class="nav-link {% if request.endpoint in ['admin_profile'] %}active{% endif %}" href="{{ url_for('admin_profile') }}">👤 Profile</a>
+          <a class="nav-link {% if request.endpoint in ['admin_models'] %}active{% endif %}" href="{{ url_for('admin_models') }}">🤖 Models</a>
+          <a class="nav-link {% if request.endpoint in ['admin_audit_logs'] %}active{% endif %}" href="{{ url_for('admin_audit_logs') }}">📋 Audit Logs</a>
+          <a class="nav-link {% if request.endpoint in ['admin_reports'] %}active{% endif %}" href="{{ url_for('admin_reports') }}">📊 Reports</a>
+          <a class="nav-link" href="{{ url_for('logout') }}">🔓 Logout</a>
+        </nav>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="admin-main flex-grow-1 p-4">
+        <div class="desktop-header d-flex justify-content-between align-items-center mb-3">
+          <h2 class="m-0">{% block header %}{% endblock %}</h2>
+          <div class="text-muted">Signed in as <strong>{{ current_user.username }}</strong></div>
+        </div>
+        {# Global flashes removed; each module should render its own scoped messages #}
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+      // Mobile sidebar functionality
+      document.addEventListener('DOMContentLoaded', function() {
+        const sidebarToggle = document.querySelector('[data-bs-toggle="collapse"]');
+        const sidebar = document.getElementById('adminSidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        
+        if (sidebarToggle && sidebar && overlay) {
+          sidebarToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('show');
+            overlay.style.display = sidebar.classList.contains('show') ? 'block' : 'none';
+          });
+          
+          // Close sidebar when clicking overlay
+          overlay.addEventListener('click', function() {
+            sidebar.classList.remove('show');
+            overlay.style.display = 'none';
+          });
+          
+          // Close sidebar when clicking nav links on mobile
+          const navLinks = sidebar.querySelectorAll('.nav-link');
+          navLinks.forEach(link => {
+            link.addEventListener('click', function() {
+              if (window.innerWidth <= 768) {
+                sidebar.classList.remove('show');
+                overlay.style.display = 'none';
+              }
+            });
+          });
+          
+          // Handle window resize
+          window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+              sidebar.classList.remove('show');
+              overlay.style.display = 'none';
+            }
+          });
+        }
+      });
+    </script>
+  </body>
+  </html>
+
+

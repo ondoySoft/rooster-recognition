@@ -1,0 +1,139 @@
+{% extends 'admin_base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block header %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <!-- Left: KPI Cards (responsive) -->
+  <div class="col-12 col-lg-4 col-xl-3">
+    <div class="row g-2 g-md-3">
+      <div class="col-6 col-sm-4 col-lg-12">
+        <div class="card shadow-sm h-100">
+          <div class="card-body py-3">
+            <div class="text-muted small">Active Model</div>
+            {% if active_model %}
+              <div class="h6 m-0 text-success">{{ active_model.model_source }}</div>
+              <small class="text-muted">{{ active_model.model_id }}</small>
+            {% else %}
+              <div class="h6 m-0 text-warning">No Active Model</div>
+              <small class="text-muted">Please activate a model</small>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-sm-4 col-lg-12">
+        <div class="card shadow-sm h-100">
+          <div class="card-body py-3">
+            <div class="text-muted small">Total Records</div>
+            <div class="h4 m-0">{{ total_records }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-sm-4 col-lg-12">
+        <div class="card shadow-sm h-100">
+          <div class="card-body py-3">
+            <div class="text-muted small">Breeds</div>
+            <div class="h4 m-0">{{ total_breeds }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-sm-4 col-lg-12">
+        <div class="card shadow-sm h-100">
+          <div class="card-body py-3">
+            <div class="text-muted small">Correct</div>
+            <div class="h4 m-0 text-success">{{ correct_count }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-sm-4 col-lg-12">
+        <div class="card shadow-sm h-100">
+          <div class="card-body py-3">
+            <div class="text-muted small">Incorrect/Unchecked</div>
+            <div class="h4 m-0"><span class="text-danger">{{ incorrect_count }}</span> / <span class="text-muted">{{ unchecked_count }}</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-sm-4 col-lg-12">
+        <div class="card shadow-sm h-100">
+          <div class="card-body py-3">
+            <div class="text-muted small">Accuracy</div>
+            <div class="h4 m-0">{{ accuracy_pct }}%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Charts (responsive) -->
+  <div class="col-12 col-lg-8 col-xl-9">
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Correctness Breakdown</h5>
+        <div class="chart-container" style="position: relative; height: 200px;">
+          <canvas id="correctnessChart"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Predicted Category Distribution</h5>
+        <div class="chart-container" style="position: relative; height: 200px;">
+          <canvas id="categoryChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    const correctnessCtx = document.getElementById('correctnessChart');
+    if (correctnessCtx) {
+      new Chart(correctnessCtx, {
+        type: 'doughnut',
+        data: {
+          labels: {{ correctness_labels|tojson }},
+          datasets: [{
+            data: {{ correctness_values|tojson }},
+            backgroundColor: ['#22c55e','#ef4444','#9ca3af']
+          }]
+        },
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false,
+          plugins:{ 
+            legend:{ position:'bottom' }
+          }
+        }
+      });
+    }
+
+    const categoryCtx = document.getElementById('categoryChart');
+    if (categoryCtx) {
+      new Chart(categoryCtx, {
+        type: 'bar',
+        data: {
+          labels: {{ cat_labels|tojson }},
+          datasets: [{
+            label: 'Count',
+            data: {{ cat_values|tojson }},
+            backgroundColor: '#3b82f6'
+          }]
+        },
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false,
+          scales:{ 
+            y:{ beginAtZero:true }
+          }
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}
+
+

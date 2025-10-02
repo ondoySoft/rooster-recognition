@@ -1,0 +1,247 @@
+{% extends "admin_base.html" %}
+
+{% block header %}Upload Teachable Machine Model{% endblock %}
+
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="mb-3" id="module-messages">
+    {% for category, message in messages %}
+      <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+        <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-triangle' }} me-2"></i>
+        {{ message|safe }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endwith %}
+
+<div class="mb-3">
+  <div class="d-flex justify-content-between align-items-center">
+    <div>
+      <h5 class="mb-0">Upload Teachable Machine Model</h5>
+      <small class="text-muted">Upload a model exported from Google Teachable Machine</small>
+    </div>
+    <a href="{{ url_for('admin_models') }}" class="btn btn-outline-secondary">
+      <i class="fas fa-arrow-left me-1"></i>Back to Models
+    </a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-header">
+      <h5 class="card-title mb-0">
+        <i class="fas fa-upload me-2"></i>Upload Teachable Machine Model (SavedModel ZIP)
+      </h5>
+      </div>
+      <div class="card-body">
+        <form method="POST" enctype="multipart/form-data">
+          <div class="mb-3">
+            <label for="model_name" class="form-label">Model Name *</label>
+            <input type="text" class="form-control" id="model_name" name="model_name" required
+                   placeholder="e.g., Rooster Classifier v1.0">
+            <div class="form-text">Give your model a descriptive name</div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="3"
+                      placeholder="Describe your model, training data, or any special features..."></textarea>
+          </div>
+          
+          <div class="mb-3">
+            <label for="accuracy_score" class="form-label">Accuracy Score</label>
+            <input type="number" class="form-control" id="accuracy_score" name="accuracy_score" 
+                   min="0" max="1" step="0.01" placeholder="0.85">
+            <div class="form-text">Enter the accuracy score from Teachable Machine (0.0 to 1.0)</div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="model_file" class="form-label">Model File *</label>
+            <input type="file" class="form-control" id="model_file" name="model_file" 
+                   accept=".zip" required>
+            <div class="form-text">Upload the SavedModel ZIP exported from Teachable Machine</div>
+          </div>
+          
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary btn-lg">
+              <i class="fas fa-upload me-2"></i>Upload Model
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+    
+    <!-- Next Steps Information -->
+    <div class="card shadow-sm mt-3">
+      <div class="card-header">
+        <h6 class="mb-0">
+          <i class="fas fa-info-circle me-2"></i>What happens after upload?
+        </h6>
+      </div>
+      <div class="card-body">
+        <ol class="mb-0 small">
+          <li class="mb-2"><strong>Processing:</strong> Your model will be extracted and organized automatically</li>
+          <li class="mb-2"><strong>Validation:</strong> The system will verify the model structure and compatibility</li>
+          <li class="mb-2"><strong>Ready to Use:</strong> Once processed, the model will be available for predictions</li>
+          <li class="mb-0"><strong>Activation:</strong> Go to <a href="{{ url_for('admin_models') }}">Models page</a> and click "Reload Model" to activate it</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card shadow-sm">
+      <div class="card-header">
+        <h6 class="card-title mb-0">
+          <i class="fas fa-info-circle me-2"></i>Export Instructions
+        </h6>
+      </div>
+      <div class="card-body">
+        <ol class="mb-0">
+          <li class="mb-2">
+            <strong>Go to Teachable Machine:</strong><br>
+            <small>Visit <a href="https://teachablemachine.withgoogle.com/" target="_blank">teachablemachine.withgoogle.com</a></small>
+          </li>
+          <li class="mb-2">
+            <strong>Create Image Project:</strong><br>
+            <small>Choose "Image Project" and set up 4 classes: bantam, dual_purpose, gamefowl, other</small>
+          </li>
+          <li class="mb-2">
+            <strong>Train Your Model:</strong><br>
+            <small>Upload images for each category and train the model</small>
+          </li>
+          <li class="mb-2">
+            <strong>Export Model:</strong><br>
+            <small>Click "Export Model" and choose <strong>TensorFlow → SavedModel</strong> format</small>
+          </li>
+          <li class="mb-0">
+            <strong>Download ZIP:</strong><br>
+            <small>The ZIP contains <code>labels.txt</code> and a folder <code>model.savedmodel</code> with <code>saved_model.pb</code> and <code>variables/</code>. Upload that ZIP here. We will automatically place files into <code>teachable_machine_models/saved_model</code> and generate <code>class_mapping.json</code>.</small>
+          </li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mt-3">
+      <div class="card-header">
+        <h6 class="card-title mb-0">
+          <i class="fas fa-lightbulb me-2"></i>Tips
+        </h6>
+      </div>
+      <div class="card-body">
+        <ul class="list-unstyled mb-0">
+          <li class="mb-2">
+            <i class="fas fa-check text-success me-2"></i>
+            <small>Use clear, high-quality images for training</small>
+          </li>
+          <li class="mb-2">
+            <i class="fas fa-check text-success me-2"></i>
+            <small>Include multiple angles and lighting conditions</small>
+          </li>
+          <li class="mb-2">
+            <i class="fas fa-check text-success me-2"></i>
+            <small>Balance the number of images per category</small>
+          </li>
+          <li class="mb-2">
+            <i class="fas fa-check text-success me-2"></i>
+            <small>Test your model in Teachable Machine before exporting</small>
+          </li>
+          <li class="mb-0">
+            <i class="fas fa-check text-success me-2"></i>
+            <small>Record the accuracy score shown in Teachable Machine</small>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="card shadow-sm mt-3">
+      <div class="card-header">
+        <h6 class="card-title mb-0">
+          <i class="fas fa-history me-2"></i>Teachable Machine History
+        </h6>
+      </div>
+      <div class="card-body">
+        <div id="teachable-machine-history-content">
+          <div class="text-center text-muted">
+            <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+            <p class="mb-0">Loading Teachable Machine history...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Load Teachable Machine history when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadTeachableMachineHistory();
+});
+
+function loadTeachableMachineHistory() {
+    fetch('/admin/teachable-machine/history')
+    .then(response => response.json())
+    .then(data => {
+        const historyContent = document.getElementById('teachable-machine-history-content');
+        if (historyContent) {
+            if (data.success && data.history.length > 0) {
+                let historyHtml = '<div class="table-responsive">';
+                historyHtml += '<table class="table table-sm table-hover">';
+                historyHtml += '<thead class="table-light">';
+                historyHtml += '<tr><th>Model Source</th><th>Status</th><th>Accuracy</th><th>Date</th></tr>';
+                historyHtml += '</thead><tbody>';
+                
+                data.history.forEach(record => {
+                    const statusClass = getStatusClass(record.status);
+                    const accuracyText = record.accuracy_percentage || 'N/A';
+                    const dateText = new Date(record.created_at).toLocaleDateString();
+                    
+                    historyHtml += `<tr>`;
+                    historyHtml += `<td><small>${record.model_source || 'Unknown'}</small></td>`;
+                    historyHtml += `<td><span class="badge ${statusClass}">${record.status}</span></td>`;
+                    historyHtml += `<td><small>${accuracyText}</small></td>`;
+                    historyHtml += `<td><small>${dateText}</small></td>`;
+                    historyHtml += `</tr>`;
+                });
+                
+                historyHtml += '</tbody></table></div>';
+                historyContent.innerHTML = historyHtml;
+            } else {
+                historyContent.innerHTML = `
+                    <div class="text-center text-muted">
+                        <i class="fas fa-clock fa-2x mb-2"></i>
+                        <p class="mb-0">No Teachable Machine models uploaded yet</p>
+                    </div>
+                `;
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error loading Teachable Machine history:', error);
+        const historyContent = document.getElementById('teachable-machine-history-content');
+        if (historyContent) {
+            historyContent.innerHTML = `
+                <div class="text-center text-danger">
+                    <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                    <p class="mb-0">Error loading Teachable Machine history</p>
+                </div>
+            `;
+        }
+    });
+}
+
+function getStatusClass(status) {
+    switch(status) {
+        case 'accepted': return 'bg-success';
+        case 'rejected': return 'bg-danger';
+        case 'completed': return 'bg-warning';
+        case 'training': return 'bg-info';
+        case 'failed': return 'bg-danger';
+        default: return 'bg-secondary';
+    }
+}
+</script>
+{% endblock %}

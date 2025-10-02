@@ -1,0 +1,394 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Business Intelligence Reports{% endblock %}
+
+{% block header %}Business Intelligence Reports{% endblock %}
+
+{% block content %}
+<!-- Back Navigation -->
+<div class="mb-3">
+    <a href="{{ url_for('admin_reports') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Back to Reports
+    </a>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Most Popular Breed</h6>
+                        <h3 class="mb-0">{{ most_popular_breed }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-crown fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Total Breed Categories</h6>
+                        <h3 class="mb-0">{{ total_breed_categories }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-list fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Growth Rate</h6>
+                        <h3 class="mb-0">{{ growth_rate }}%</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-chart-line fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Market Share</h6>
+                        <h3 class="mb-0">{{ market_share }}%</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-percentage fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <!-- Popular Breeds Distribution -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>Popular Breeds Distribution
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="popularBreedsChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Breed Popularity Trends -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Breed Popularity Trends
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="breedTrendsChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Business Analysis -->
+<div class="row mb-4">
+    <!-- Seasonal Analysis -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar-alt me-2"></i>Seasonal Analysis
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="seasonalChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Breed Performance vs Popularity -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-scatter me-2"></i>Performance vs Popularity
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="performancePopularityChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Tables -->
+<div class="row">
+    <!-- Breed Rankings -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-trophy me-2"></i>Breed Rankings
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive" style="max-height: 400px;">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Breed</th>
+                                <th>Predictions</th>
+                                <th>Popularity</th>
+                                <th>Accuracy</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for breed in breed_rankings %}
+                            <tr>
+                                <td>
+                                    {% if loop.index == 1 %}
+                                        <span class="badge bg-warning">🥇</span>
+                                    {% elif loop.index == 2 %}
+                                        <span class="badge bg-secondary">🥈</span>
+                                    {% elif loop.index == 3 %}
+                                        <span class="badge bg-warning">🥉</span>
+                                    {% else %}
+                                        <span class="text-muted">#{{ loop.index }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ breed.name }}</td>
+                                <td>{{ breed.prediction_count }}</td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-{{ 'success' if breed.popularity >= 80 else 'info' if breed.popularity >= 60 else 'warning' }}" 
+                                             style="width: {{ breed.popularity }}%">
+                                            {{ breed.popularity }}%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if breed.accuracy >= 80 else 'warning' if breed.accuracy >= 60 else 'danger' }}">
+                                        {{ breed.accuracy }}%
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Market Insights -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>Market Insights
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Value</th>
+                                <th>Trend</th>
+                                <th>Insight</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for insight in market_insights %}
+                            <tr>
+                                <td>{{ insight.metric }}</td>
+                                <td>{{ insight.value }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if insight.trend == 'up' else 'danger' if insight.trend == 'down' else 'secondary' }}">
+                                        <i class="fas fa-arrow-{{ insight.trend }}"></i>
+                                    </span>
+                                </td>
+                                <td>
+                                    <small class="text-muted">{{ insight.insight }}</small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Strategic Recommendations -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Strategic Recommendations
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for recommendation in strategic_recommendations %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card border-{{ 'success' if recommendation.priority == 'high' else 'warning' if recommendation.priority == 'medium' else 'info' }}">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <i class="fas fa-{{ 'exclamation-triangle' if recommendation.priority == 'high' else 'info-circle' if recommendation.priority == 'medium' else 'lightbulb' }} me-2"></i>
+                                    {{ recommendation.title }}
+                                </h6>
+                                <p class="card-text small">{{ recommendation.description }}</p>
+                                <span class="badge bg-{{ 'danger' if recommendation.priority == 'high' else 'warning' if recommendation.priority == 'medium' else 'info' }}">
+                                    {{ recommendation.priority.title() }} Priority
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Popular Breeds Chart
+const popularBreedsCtx = document.getElementById('popularBreedsChart').getContext('2d');
+new Chart(popularBreedsCtx, {
+    type: 'doughnut',
+    data: {
+        labels: {{ breed_names | tojson }},
+        datasets: [{
+            data: {{ breed_counts | tojson }},
+            backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0', '#9966ff'],
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Breed Trends Chart
+const breedTrendsCtx = document.getElementById('breedTrendsChart').getContext('2d');
+new Chart(breedTrendsCtx, {
+    type: 'line',
+    data: {
+        labels: {{ trend_dates | tojson }},
+        datasets: [
+            {% for breed_trend in breed_trends %}
+            {
+                label: '{{ breed_trend.name }}',
+                data: {{ breed_trend.data | tojson }},
+                borderColor: '{{ breed_trend.color }}',
+                backgroundColor: '{{ breed_trend.color }}20',
+                fill: false,
+                tension: 0.4
+            }{{ ',' if not loop.last }}
+            {% endfor %}
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Seasonal Chart
+const seasonalCtx = document.getElementById('seasonalChart').getContext('2d');
+new Chart(seasonalCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ seasonal_labels | tojson }},
+        datasets: [{
+            label: 'Monthly Activity',
+            data: {{ seasonal_data | tojson }},
+            backgroundColor: '#17a2b8',
+            borderColor: '#117a8b',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Performance vs Popularity Chart
+const performancePopularityCtx = document.getElementById('performancePopularityChart').getContext('2d');
+new Chart(performancePopularityCtx, {
+    type: 'scatter',
+    data: {
+        datasets: [{
+            label: 'Breeds',
+            data: {{ scatter_data | tojson }},
+            backgroundColor: 'rgba(0, 123, 255, 0.6)',
+            borderColor: 'rgba(0, 123, 255, 1)',
+            pointRadius: 8
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            x: {
+                title: {
+                    display: true,
+                    text: 'Popularity Score'
+                },
+                min: 0,
+                max: 100
+            },
+            y: {
+                title: {
+                    display: true,
+                    text: 'Accuracy %'
+                },
+                min: 0,
+                max: 100
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

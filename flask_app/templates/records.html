@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}All Records - Rooster Recognition System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="fas fa-list"></i> All Rooster Records
+            </h2>
+            <a href="{{ url_for('upload_file') }}" class="btn btn-primary">
+                <i class="fas fa-upload"></i> Upload New Image
+            </a>
+        </div>
+        
+        {% if records.items %}
+        <div class="row">
+            {% for record in records.items %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-img-top-container" style="height: 200px; overflow: hidden;">
+                        <img src="{{ url_for('uploaded_file', filename=record.filename) }}" 
+                             alt="Rooster image" 
+                             class="card-img-top" 
+                             style="object-fit: cover; height: 100%;">
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h6 class="card-title">{{ record.predicted_category }}</h6>
+                        <p class="card-text">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar"></i> {{ record.uploaded_at.strftime('%m/%d/%Y') }}
+                            </small>
+                        </p>
+                        
+                        <div class="mb-2">
+                            <strong>Confidence:</strong>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar 
+                                    {% if record.confidence_score >= 0.8 %}bg-success
+                                    {% elif record.confidence_score >= 0.6 %}bg-warning
+                                    {% else %}bg-danger{% endif %}" 
+                                     role="progressbar" 
+                                     style="width: {{ record.confidence_score * 100 }}%"
+                                     aria-valuenow="{{ record.confidence_score * 100 }}" 
+                                     aria-valuenow="0" 
+                                     aria-valuemax="100">
+                                    {{ "%.1f"|format(record.confidence_score * 100) }}%
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-auto">
+                            <a href="{{ url_for('results', record_id=record.id) }}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye"></i> View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if records.pages > 1 %}
+        <nav aria-label="Records pagination">
+            <ul class="pagination justify-content-center">
+                {% if records.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('records', page=records.prev_num) }}">
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for page_num in records.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != records.page %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('records', page=page_num) }}">{{ page_num }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if records.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('records', page=records.next_num) }}">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-images fa-5x text-muted mb-4"></i>
+            <h4 class="text-muted">No Records Found</h4>
+            <p class="text-muted">Upload your first rooster image to get started!</p>
+            <a href="{{ url_for('upload_file') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-upload"></i> Upload First Image
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Statistics -->
+{% if records.items %}
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar"></i> Statistics
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="border-end">
+                            <h4 class="text-primary">{{ records.total }}</h4>
+                            <p class="text-muted mb-0">Total Records</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border-end">
+                            <h4 class="text-success">{{ records.items|selectattr('confidence_score', '>=', 0.8)|list|length }}</h4>
+                            <p class="text-muted mb-0">High Confidence</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border-end">
+                            <h4 class="text-warning">{{ records.items|selectattr('confidence_score', '>=', 0.6)|selectattr('confidence_score', '<', 0.8)|list|length }}</h4>
+                            <p class="text-muted mb-0">Medium Confidence</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <h4 class="text-danger">{{ records.items|selectattr('confidence_score', '<', 0.6)|list|length }}</h4>
+                        <p class="text-muted mb-0">Low Confidence</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

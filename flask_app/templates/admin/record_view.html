@@ -1,0 +1,96 @@
+{% extends 'admin_base.html' %}
+{% block title %}Record {{ record.id }}{% endblock %}
+{% block header %}Record #{{ record.id }}{% endblock %}
+{% block content %}
+{% with messages = get_flashed_messages(category_filter=['records'], with_categories=false) %}
+  {% if messages %}
+  <div class="mb-3" id="module-messages">
+    {% for message in messages %}
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endwith %}
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <img class="card-img-top" src="{{ url_for('uploaded_file', filename=record.filename) }}" alt="record image">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <span class="text-muted">Uploaded: {{ record.uploaded_at }}</span>
+        <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('admin_records') }}">Back to Records</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title mb-3">Prediction Summary</h5>
+        {% set cat = record.predicted_category|lower %}
+        {% set badge = 'secondary' %}
+        {% if 'bantam' in cat %}{% set badge='info' %}{% elif 'dual' in cat %}{% set badge='primary' %}{% elif 'gamefowl' in cat %}{% set badge='danger' %}{% elif 'other' in cat %}{% set badge='secondary' %}{% endif %}
+        <div class="mb-2">
+          <span class="text-muted">Predicted Category</span><br>
+          <span class="badge bg-{{ badge }}">{{ record.predicted_category }}</span>
+        </div>
+        <div class="mb-3">
+          <span class="text-muted">Confidence</span>
+          <div class="progress" style="height: 12px;">
+            <div class="progress-bar bg-success" role="progressbar" style="width: {{ record.confidence_score*100 }}%"></div>
+          </div>
+          <small class="text-muted">{{ '%.2f%%' % (record.confidence_score * 100) }}</small>
+        </div>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Original Filename</span><span>{{ record.original_filename }}</span></li>
+          <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Stored Filename</span><span>{{ record.filename }}</span></li>
+          <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Record ID</span><span>#{{ record.id }}</span></li>
+          <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Model Used</span><span>{{ record.model_source or 'Unknown' }}</span></li>
+          {% if record.model_id %}
+          <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Model ID</span><span>#{{ record.model_id }}</span></li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-4">
+  <div class="col-lg-12">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title mb-3">Feedback</h5>
+        <form method="post" class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Was the prediction correct?</label>
+            <select name="is_correct" class="form-select">
+              <option value="" {% if record.is_correct is none %}selected{% endif %}>— Select —</option>
+              <option value="1" {% if record.is_correct == 1 %}selected{% endif %}>Yes, correct</option>
+              <option value="0" {% if record.is_correct == 0 %}selected{% endif %}>No, incorrect</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Correct Breed (if incorrect)</label>
+            <select name="breed_id" class="form-select">
+              <option value="" {% if not record.breed_id %}selected{% endif %}>— Select breed —</option>
+              {% for b in breeds %}
+                <option value="{{ b.id }}" {% if record.breed_id==b.id %}selected{% endif %}>{{ b.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-12">
+            <label class="form-label">Additional Notes</label>
+            <textarea name="notes" class="form-control" rows="3" placeholder="Your remarks...">{{ record.notes or '' }}</textarea>
+          </div>
+          <div class="col-12">
+            <button class="btn btn-primary" type="submit">Save Feedback</button>
+            <a class="btn btn-outline-secondary" href="{{ url_for('admin_records') }}">Back</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

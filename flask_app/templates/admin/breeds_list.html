@@ -1,0 +1,77 @@
+{% extends 'admin_base.html' %}
+{% block title %}Breeds{% endblock %}
+{% block header %}Breeds{% endblock %}
+{% block content %}
+<style>
+  @media (max-width: 768px) {
+    .table th:nth-child(3), .table td:nth-child(3) {
+      display: none;
+    }
+  }
+</style>
+{% with messages = get_flashed_messages(category_filter=['breeds'], with_categories=false) %}
+  {% if messages %}
+  <div class="mb-3">
+    {% for message in messages %}
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endwith %}
+<div class="d-flex justify-content-end mb-3">
+  <a class="btn btn-primary" href="{{ url_for('breeds_new') }}">New Breed</a>
+  </div>
+
+<div class="table-responsive">
+  <table id="breedsTable" class="table table-striped align-middle">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Image</th>
+        <th>Updated</th>
+        <th style="width:160px">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for b in breeds %}
+      <tr>
+        <td>{{ b.name }}</td>
+        <td>
+          {% if b.image_path %}
+            <img src="{{ url_for('static', filename=b.image_path) }}" alt="" style="height:40px;">
+          {% else %}
+            <span class="text-muted">—</span>
+          {% endif %}
+        </td>
+        <td>{{ b.updated_at or b.created_at }}</td>
+        <td>
+          <div class="btn-group-vertical btn-group-sm d-md-inline-flex" role="group">
+            <a class="btn btn-outline-primary" href="{{ url_for('breeds_edit', breed_id=b.id) }}">Edit</a>
+            <form method="post" action="{{ url_for('breeds_delete', breed_id=b.id) }}" style="display:inline" onsubmit="return confirm('Delete this breed?')">
+              <button class="btn btn-outline-danger" type="submit">Delete</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    const el = document.getElementById('breedsTable');
+    if (el && window.jQuery) {
+      jQuery(el).DataTable({
+        pageLength: 8,
+        lengthChange: false,
+        ordering: true,
+        language: { search: "Search:" }
+      });
+    }
+  });
+  </script>
+{% endblock %}
+

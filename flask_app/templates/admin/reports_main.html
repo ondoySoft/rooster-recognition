@@ -1,0 +1,228 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Reports & Analytics{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-0">Reports & Analytics</h4>
+        <p class="text-muted mb-0">Comprehensive insights into system performance and usage</p>
+    </div>
+    <div class="text-end">
+        <small class="text-muted">Last updated: {{ current_time }}</small>
+    </div>
+</div>
+
+<!-- Quick Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Total Predictions</h6>
+                        <h3 class="mb-0">{{ total_predictions }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-images fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Overall Accuracy</h6>
+                        <h3 class="mb-0">{{ overall_accuracy }}%</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-chart-line fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Active Models</h6>
+                        <h3 class="mb-0">{{ active_models }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-brain fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Training Sessions</h6>
+                        <h3 class="mb-0">{{ total_training }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-cogs fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Categories -->
+<div class="row">
+    <!-- Prediction Performance Analytics -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>Prediction Performance Analytics
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Analyze model accuracy, confidence scores, and prediction performance across different breeds and models.</p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success me-2"></i>Overall accuracy metrics</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Model comparison analysis</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Breed-wise performance</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Confidence score distribution</li>
+                </ul>
+                <div class="d-grid">
+                    <a href="{{ url_for('admin_reports_prediction') }}" class="btn btn-primary">
+                        📊 View Prediction Analytics
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Usage & Activity Reports -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-users me-2"></i>Usage & Activity Reports
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Monitor system usage patterns, user activity, and operational metrics.</p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success me-2"></i>Upload statistics and trends</li>
+                    <li><i class="fas fa-check text-success me-2"></i>User activity patterns</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Model usage frequency</li>
+                    <li><i class="fas fa-check text-success me-2"></i>System load analysis</li>
+                </ul>
+                <div class="d-grid">
+                    <a href="{{ url_for('admin_reports_usage') }}" class="btn btn-success">
+                        👥 View Usage Reports
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Quality & Validation Reports -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-shield-alt me-2"></i>Data Quality & Validation Reports
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Assess data quality, user feedback, and validation metrics to improve model performance.</p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success me-2"></i>Feedback analysis</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Data distribution insights</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Confidence vs accuracy correlation</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Edge case identification</li>
+                </ul>
+                <div class="d-grid">
+                    <a href="{{ url_for('admin_reports_quality') }}" class="btn btn-info">
+                        🛡️ View Quality Reports
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Business Intelligence Reports -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>Business Intelligence Reports
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Gain business insights including popular breeds, trends, and strategic analytics.</p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success me-2"></i>Popular breeds analysis</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Trend analysis</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Growth metrics</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Strategic insights</li>
+                </ul>
+                <div class="d-grid">
+                    <a href="{{ url_for('admin_reports_business') }}" class="btn btn-warning">
+                        📈 View Business Intelligence
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Additional Reports Section -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-download me-2"></i>Export & Download
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="d-grid">
+                            <button class="btn btn-outline-primary" onclick="exportReport('csv')">
+                                <i class="fas fa-file-csv me-2"></i>Export as CSV
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-grid">
+                            <button class="btn btn-outline-secondary" onclick="exportReport('pdf')">
+                                <i class="fas fa-file-pdf me-2"></i>Export as PDF
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-grid">
+                            <button class="btn btn-outline-info" onclick="exportReport('json')">
+                                <i class="fas fa-file-code me-2"></i>Export as JSON
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function exportReport(format) {
+    // Implementation for report export
+    alert(`Exporting reports as ${format.toUpperCase()}...`);
+    // Add actual export functionality here
+}
+</script>
+{% endblock %}

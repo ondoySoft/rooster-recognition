@@ -1,0 +1,235 @@
+{% extends "admin_base.html" %}
+
+{% block header %}Model Management{% endblock %}
+
+{% block content %}
+<div id="module-messages"></div>
+
+<div class="mb-3">
+  <div class="d-flex justify-content-between align-items-center">
+    <div>
+      <h5 class="mb-0">AI Model Sources</h5>
+      <small class="text-muted">Manage and switch between different AI models. After changing the active model, click <strong>Reload Model</strong> to apply it for predictions.</small>
+    </div>
+    <button type="button" class="btn btn-outline-primary btn-sm" onclick="reloadModel()">
+      <i class="fas fa-sync-alt me-1"></i>Reload Model
+    </button>
+  </div>
+</div>
+
+<div class="row">
+  {% for model in models %}
+  <div class="col-lg-6 col-xl-4 mb-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+          <h6 class="mb-0">{{ model.model_source }}</h6>
+          <small class="text-muted">{{ model.model_id }}</small>
+          {% if model.accuracy_score %}
+            <br><small class="text-success">Accuracy: {{ "%.1f"|format(model.accuracy_score * 100) }}%</small>
+          {% endif %}
+        </div>
+        {% if model.is_active %}
+          <span class="badge bg-success">Active</span>
+        {% else %}
+          <span class="badge bg-secondary">Inactive</span>
+        {% endif %}
+      </div>
+      <div class="card-body">
+        <p class="card-text">{{ model.description or 'No description provided.' }}</p>
+        
+        <div class="mb-3">
+          <small class="text-muted">
+            <i class="fas fa-calendar me-1"></i>
+            Created: {{ model.created_at.strftime('%Y-%m-%d %H:%M') if model.created_at else 'N/A' }}
+          </small>
+          {% if model.updated_at and model.updated_at != model.created_at %}
+            <br>
+            <small class="text-muted">
+              <i class="fas fa-edit me-1"></i>
+              Updated: {{ model.updated_at.strftime('%Y-%m-%d %H:%M') }}
+            </small>
+          {% endif %}
+        </div>
+      </div>
+      <div class="card-footer bg-transparent">
+        <div class="btn-group w-100" role="group">
+          {% if not model.is_active %}
+            <form method="POST" action="{{ url_for('admin_model_activate', model_id=model.id) }}" class="d-inline">
+              <button type="submit" class="btn btn-success btn-sm" 
+                      onclick="return confirm('Activate {{ model.model_source }}? This will deactivate the current active model.')">
+                <i class="fas fa-play me-1"></i>Activate
+              </button>
+            </form>
+          {% else %}
+            <form method="POST" action="{{ url_for('admin_model_deactivate', model_id=model.id) }}" class="d-inline">
+              <button type="submit" class="btn btn-warning btn-sm" 
+                      onclick="return confirm('Deactivate {{ model.model_source }}?')">
+                <i class="fas fa-pause me-1"></i>Deactivate
+              </button>
+            </form>
+          {% endif %}
+          
+          {% if model.model_source == 'Local Training' %}
+            <a href="{{ url_for('admin_train_model') }}" class="btn btn-outline-primary btn-sm">
+              <i class="fas fa-brain me-1"></i>Train
+            </a>
+          {% elif model.model_source == 'Teachable Machine' %}
+            <a href="{{ url_for('admin_teachable_machine_upload') }}" class="btn btn-outline-primary btn-sm">
+              <i class="fas fa-upload me-1"></i>Upload
+            </a>
+          {% elif model.model_source == 'Google Colab' %}
+            <a href="{{ url_for('admin_colab_upload') }}" class="btn btn-outline-primary btn-sm">
+              <i class="fas fa-upload me-1"></i>Upload
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% if not models %}
+<div class="text-center py-5">
+  <i class="fas fa-robot fa-3x text-muted mb-3"></i>
+  <h5 class="text-muted">No AI Models Found</h5>
+  <p class="text-muted">No models are currently configured in the system.</p>
+</div>
+{% endif %}
+
+<!-- Model Status Summary -->
+<div class="row mt-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h6 class="mb-0">
+          <i class="fas fa-info-circle me-2"></i>Model Information
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4">
+            <div class="text-center">
+              <h4 class="text-primary">{{ models | selectattr('is_active') | list | length }}</h4>
+              <small class="text-muted">Active Model(s)</small>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-center">
+              <h4 class="text-info">{{ models | length }}</h4>
+              <small class="text-muted">Total Models</small>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-center">
+              <h4 class="text-success">{{ models | selectattr('model_source', 'equalto', 'Local Training') | list | length }}</h4>
+              <small class="text-muted">Local Models</small>
+            </div>
+          </div>
+        </div>
+        
+        <hr class="my-3">
+        
+        <div class="alert alert-info mb-0">
+          <i class="fas fa-lightbulb me-2"></i>
+          <strong>Tip:</strong> Only one model can be active at a time. When you activate a new model, 
+          the current active model will be automatically deactivated. Make sure to upload the 
+          corresponding model files to the appropriate directories before activating.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function reloadModel() {
+    if (confirm('Are you sure you want to reload the active model? This will clear the current model cache and reload based on the database setting.')) {
+        const button = event.target;
+        const originalText = button.innerHTML;
+        
+        // Show loading state
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Reloading...';
+        
+        fetch('/admin/model/reload', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                button.innerHTML = '<i class="fas fa-check me-1"></i>Reloaded!';
+                button.className = 'btn btn-success btn-sm';
+                
+                // Show success banner in module container
+                const container = document.getElementById('module-messages');
+                if (container) {
+                  const alertDiv = document.createElement('div');
+                  alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                  alertDiv.innerHTML = `
+                      <i class="fas fa-check-circle me-2"></i>${data.message}
+                      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                  `;
+                  container.innerHTML = '';
+                  container.appendChild(alertDiv);
+                }
+                
+                // Reset button after 2 seconds
+                setTimeout(() => {
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                    button.className = 'btn btn-outline-primary btn-sm';
+                }, 2000);
+            } else {
+                // Show error message
+                button.innerHTML = '<i class="fas fa-times me-1"></i>Failed';
+                button.className = 'btn btn-danger btn-sm';
+                
+                // Show error banner in module container
+                const container = document.getElementById('module-messages');
+                if (container) {
+                  const alertDiv = document.createElement('div');
+                  alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+                  alertDiv.innerHTML = `
+                      <i class="fas fa-exclamation-triangle me-2"></i>${data.message}
+                      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                  `;
+                  container.innerHTML = '';
+                  container.appendChild(alertDiv);
+                }
+                
+                // Reset button after 2 seconds
+                setTimeout(() => {
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                    button.className = 'btn btn-outline-primary btn-sm';
+                }, 2000);
+            }
+        })
+        .catch(error => {
+            console.error('Error reloading model:', error);
+            button.disabled = false;
+            button.innerHTML = originalText;
+            button.className = 'btn btn-outline-primary btn-sm';
+            
+            // Show error banner in module container
+            const container = document.getElementById('module-messages');
+            if (container) {
+              const alertDiv = document.createElement('div');
+              alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+              alertDiv.innerHTML = `
+                  <i class="fas fa-exclamation-triangle me-2"></i>Error reloading model: ${error.message}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+              `;
+              container.innerHTML = '';
+              container.appendChild(alertDiv);
+            }
+        });
+    }
+}
+</script>
+{% endblock %}
