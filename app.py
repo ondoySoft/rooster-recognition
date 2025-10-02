@@ -3240,7 +3240,8 @@ def internal_error(e):
     db.session.rollback()
     return render_template('500.html'), 500
 
-if __name__ == '__main__':
+def initialize_app():
+    """Initialize the application - runs on startup"""
     # Ensure upload directory exists
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     
@@ -3251,7 +3252,11 @@ if __name__ == '__main__':
     # Load the model on startup
     print("Loading AI model...")
     load_model()
-    
-    # Run the application
+
+# Initialize the app (runs with both Flask dev server and Gunicorn)
+initialize_app()
+
+if __name__ == '__main__':
+    # Run the application (only for development)
     port = int(os.environ.get('PORT', 5000))
     app.run(debug=False, host='0.0.0.0', port=port)
