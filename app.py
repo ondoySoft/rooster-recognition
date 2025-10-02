@@ -88,7 +88,12 @@ rooster_model = None
 # Lightweight healthcheck endpoint for Railway
 @app.route('/health')
 def health():
-    return ('OK', 200)
+    """Health check endpoint for Railway deployment"""
+    try:
+        # Quick check - just return OK if app is running
+        return jsonify({"status": "healthy", "timestamp": datetime.now().isoformat()}), 200
+    except Exception as e:
+        return jsonify({"status": "unhealthy", "error": str(e)}), 500
 
 # Database Models
 class User(db.Model, UserMixin):
@@ -3248,4 +3253,5 @@ if __name__ == '__main__':
     load_model()
     
     # Run the application
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=False, host='0.0.0.0', port=port)
