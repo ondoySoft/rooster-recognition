@@ -32,8 +32,37 @@ from sqlalchemy import func
 app = Flask(__name__, template_folder='flask_app/templates', static_folder='flask_app/static')
 
 # Configuration
-app.config['SECRET_KEY'] = 'your-secret-key-change-this-in-production'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:@localhost/rooster_db'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-change-me')
+
+# Database: prefer env-provided URL; fallback to localhost only if nothing provided
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
+    'DATABASE_URL',
+    os.environ.get('SQLALCHEMY_DATABASE_URI', 'mysql+pymysql://root:@localhost/rooster_db')
+)
+
+# If fallback still points to localhost but Railway/MySQL env vars exist, construct from them
+if (
+    app.config.get('SQLALCHEMY_DATABASE_URI', '').endswith('localhost/rooster_db')
+    or 'localhost' in app.config.get('SQLALCHEMY_DATABASE_URI', '')
+):
+    mysql_user = os.environ.get('MYSQLUSER') or os.environ.get('MYSQL_USER') or 'root'
+    mysql_password = os.environ.get('MYSQL_ROOT_PASSWORD') or os.environ.get('MYSQL_PASSWORD') or ''
+    mysql_host = (
+        os.environ.get('RAILWAY_PRIVATE_DOMAIN')
+        or os.environ.get('MYSQLHOST')
+        or os.environ.get('MYSQL_HOST')
+        or 'localhost'
+    )
+    mysql_port = os.environ.get('MYSQLPORT') or os.environ.get('MYSQL_PORT') or '3306'
+    mysql_db = (
+        os.environ.get('MYSQL_DATABASE')
+        or os.environ.get('MYSQLDATABASE')
+        or os.environ.get('MYSQL_DB')
+        or 'rooster_db'
+    )
+    app.config['SQLALCHEMY_DATABASE_URI'] = (
+        f"mysql+pymysql://{mysql_user}:{mysql_password}@{mysql_host}:{mysql_port}/{mysql_db}"
+    )
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'flask_app/uploads'
 # Increase upload size to accommodate large .h5/ZIP models (e.g., Colab/TM)
