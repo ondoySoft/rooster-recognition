@@ -85,6 +85,11 @@ login_manager.login_message_category = 'info'
 # Global variable to store the loaded model
 rooster_model = None
 
+# Lightweight healthcheck endpoint for Railway
+@app.route('/health')
+def health():
+    return ('OK', 200)
+
 # Database Models
 class User(db.Model, UserMixin):
     """User model for authentication and roles"""
